@@ -2,6 +2,7 @@ package server
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"net"
 	cl "nmchat/client"
@@ -33,7 +34,7 @@ func Init(addr string) *Server {
 	}
 }
 
-func (s *Server) Start() {
+func (s *Server) lisenChannels() {
 
 	for {
 		select {
@@ -46,7 +47,8 @@ func (s *Server) Start() {
 		case msg := <-s.sendMsgCh:
 			log.Println("Send:", msg)
 			s.messages = append(s.messages, msg)
-			s.SendMessage(msg)
+			fmt.Printf("%+v\n", s.messages)
+			//s.SendMessage(msg)
 
 		case err := <-s.errCh:
 			log.Println("Error:", err.Error())
@@ -78,16 +80,24 @@ func (s *Server) Err(err error) {
 	s.errCh <- err
 }
 
-func (s *Server) LisenTelnet() error {
+func (s *Server) Start() {
+
+	defer func() {
+		s.Done()
+	}()
+
 	addr := s.Addr
 	if addr == "" {
 		addr = ":3333"
 	}
 
+	go s.lisenChannels()
+
 	log.Printf("Starting server on %v\n", addr)
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return err
+		log.Printf("Error accepting connection %v.", err)
+		return
 	}
 	defer listener.Close()
 	for {
@@ -102,12 +112,11 @@ func (s *Server) LisenTelnet() error {
 		}
 		log.Printf("New connection from %v.", conn.RemoteAddr())
 		conn.SetDeadline(time.Now().Add(conn.IdleTimeout))
-		go handleClient(conn)
+		go s.handleClient(conn)
 	}
-
 }
 
-func handleClient(conn net.Conn) error {
+func (s *Server) handleClient(conn net.Conn) error {
 	defer func() {
 		log.Printf("Closing connection from %v", conn.RemoteAddr())
 		conn.Close()
@@ -124,7 +133,26 @@ func handleClient(conn net.Conn) error {
 			}
 			break
 		}
-		w.WriteString(strings.ToUpper(scanr.Text()) + "\n")
+		text := scanr.Text()
+
+		switch text {
+		case "":
+			continue
+		case "!exit":
+			log.Printf("Client %v decited to exit", conn.RemoteAddr())
+			conn.Close()
+			return nil
+		case "!help":
+			text = "Commands:\n\t !exit - exit from chat\n\t !help - print info about command"
+		default:
+			msg := msg.Message{
+				Body: scanr.Text(),
+			}
+			s.SendMessage(&msg)
+			text = strings.ToUpper(text)
+		}
+
+		w.WriteString(text + "\n")
 		w.Flush()
 	}
 	return nil

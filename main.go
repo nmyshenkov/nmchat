@@ -7,8 +7,6 @@ import (
 func main() {
 
 	server := server.Init("")
-	server.LisenTelnet()
-
-	//server.Start()
+	server.Start()
 
 }
