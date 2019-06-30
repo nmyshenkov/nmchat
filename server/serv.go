@@ -7,6 +7,7 @@ import (
 	"net"
 	cl "nmchat/client"
 	msg "nmchat/message"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -26,6 +27,7 @@ func Init(addr string) *Server {
 		messages,
 		sendMsgCh,
 		clients,
+		1,
 		addCh,
 		delCh,
 		doneCh,
@@ -60,26 +62,38 @@ func (s *Server) lisenChannels() {
 	}
 }
 
+//AddNewClient - add client
 func (s *Server) AddNewClient(cl *cl.Client) {
 	s.addCliCh <- cl
 }
 
+//DelClient - del client
 func (s *Server) DelClient(cl *cl.Client) {
 	s.delCliCh <- cl
 }
 
+//SendMessage - send message to chat
 func (s *Server) SendMessage(msg *msg.Message) {
 	s.sendMsgCh <- msg
 }
 
+//Done - done channale
 func (s *Server) Done() {
 	s.doneCh <- true
 }
 
+//Err - error channel
 func (s *Server) Err(err error) {
 	s.errCh <- err
 }
 
+func (s *Server) getNextClientID() int {
+	id := s.clNextID
+	s.clNextID++
+	return id
+}
+
+//Start - start server
 func (s *Server) Start() {
 
 	defer func() {
@@ -91,6 +105,7 @@ func (s *Server) Start() {
 		addr = ":3333"
 	}
 
+	//start to lisen channels
 	go s.lisenChannels()
 
 	log.Printf("Starting server on %v\n", addr)
@@ -112,17 +127,27 @@ func (s *Server) Start() {
 		}
 		log.Printf("New connection from %v.", conn.RemoteAddr())
 		conn.SetDeadline(time.Now().Add(conn.IdleTimeout))
-		go s.handleClient(conn)
+		newClID := s.getNextClientID()
+		cl := &cl.Client{
+			ID:   newClID,
+			Name: "User" + strconv.Itoa(newClID),
+		}
+		s.AddNewClient(cl)
+		go s.handleClient(conn, cl)
 	}
 }
 
-func (s *Server) handleClient(conn net.Conn) error {
+func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 	defer func() {
 		log.Printf("Closing connection from %v", conn.RemoteAddr())
 		conn.Close()
 	}()
 	r := bufio.NewReader(conn)
 	w := bufio.NewWriter(conn)
+
+	w.WriteString("Write !help to show commands\n Your nikname: " + client.Name + "\n")
+	w.Flush()
+
 	scanr := bufio.NewScanner(r)
 	for {
 		scanned := scanr.Scan()
