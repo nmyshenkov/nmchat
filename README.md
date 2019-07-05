@@ -1,1 +1,1 @@
-## nmchat - simple chat server on golang
+# nmchat - simple chat server on golang

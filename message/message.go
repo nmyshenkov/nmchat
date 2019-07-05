@@ -1,11 +1,20 @@
 package message
 
+// Message - message
 type Message struct {
-	From string
-	To   string
-	Body string
+	FromNikname string
+	From        int
+	ToNikname   string
+	To          int
+	Body        string
 }
 
-func (m *Message) ToString() string {
-	return m.From + ": " + m.Body
+// FromStringMessage - get full string answer
+func (m *Message) FromStringMessage() string {
+	return m.FromNikname + ": " + m.Body
+}
+
+// FromByteMessage - get full byte answer
+func (m *Message) FromByteMessage() []byte {
+	return []byte(m.FromNikname + ": " + m.Body)
 }
