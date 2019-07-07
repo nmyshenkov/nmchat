@@ -49,8 +49,9 @@ func (s *Server) lisenChannels() {
 			log.Println("Send:", msg)
 			s.messages = append(s.messages, msg)
 			if msg.To > 0 {
-				if cl, ok := s.clients[msg.To]; ok {
-					cl.IncomingChan <- msg
+				c := s.getActiveClientByID(msg.To)
+				if c != nil {
+					c.IncomingChan <- msg
 				}
 			}
 
@@ -62,37 +63,6 @@ func (s *Server) lisenChannels() {
 			return
 		}
 	}
-}
-
-//AddNewClient - add client
-func (s *Server) AddNewClient(cl *cl.Client) {
-	s.addCliCh <- cl
-}
-
-//DelClient - del client
-func (s *Server) DelClient(cl *cl.Client) {
-	s.delCliCh <- cl
-}
-
-//SendMessage - send message to chat
-func (s *Server) SendMessage(msg *msg.Message) {
-	s.sendMsgCh <- msg
-}
-
-//Done - done channale
-func (s *Server) Done() {
-	s.doneCh <- true
-}
-
-//Err - error channel
-func (s *Server) Err(err error) {
-	s.errCh <- err
-}
-
-func (s *Server) getNextClientID() int {
-	id := s.clNextID
-	s.clNextID++
-	return id
 }
 
 //Start - start server
@@ -151,7 +121,7 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 		for {
 			select {
 			case message := <-client.IncomingChan:
-				w.Write(message.FromByteMessage())
+				w.Write(message.FromByteMessage("\n"))
 				w.Flush()
 			}
 		}
@@ -184,8 +154,8 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 				text += "\t" + client.Name + " with ID: " + client.GetTextID() + "\n"
 			}
 		default:
-
 			//TODO: will think about message send design
+			// rewrite to function with error interface
 			if text[0] == 47 {
 				texts := strings.SplitN(text, " ", 2)
 
@@ -194,11 +164,23 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 
 				msgTo = strings.Replace(msgTo, "/", "", 1)
 				id, _ := strconv.Atoi(msgTo)
-				msg := msg.Message{
-					To:   id,
-					Body: msgBody,
+
+				c := s.getActiveClientByID(id)
+				if c != nil {
+					msg := msg.Message{
+						To:          c.ID,
+						ToNikname:   c.Name,
+						From:        client.ID,
+						FromNikname: client.Name,
+						Body:        msgBody,
+					}
+					s.SendMessage(&msg)
+					//clear message
+					text = ""
+				} else {
+					text = "Client not found!!"
 				}
-				s.SendMessage(&msg)
+
 			} else {
 				text = strings.ToUpper(text)
 			}
