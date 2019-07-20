@@ -108,6 +108,7 @@ func (s *Server) Start() {
 func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 	defer func() {
 		log.Printf("Closing connection from %v", conn.RemoteAddr())
+		s.DelClient(client)
 		conn.Close()
 	}()
 	r := bufio.NewReader(conn)
@@ -147,7 +148,7 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 			conn.Close()
 			return nil
 		case "!help":
-			text = "Commands:\n\t !exit - exit from chat\n\t !help - print info about command\n\t !list - print users in the chat"
+			text = HELP
 		case "!list":
 			text = "Users in the chat:\n"
 			for _, client := range s.clients {
@@ -159,21 +160,14 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 			if text[0] == 47 {
 				texts := strings.SplitN(text, " ", 2)
 
-				msgTo := texts[0]
-				msgBody := texts[1]
+				msgTo, msgBody := texts[0], texts[1]
 
 				msgTo = strings.Replace(msgTo, "/", "", 1)
 				id, _ := strconv.Atoi(msgTo)
 
 				c := s.getActiveClientByID(id)
 				if c != nil {
-					msg := msg.Message{
-						To:          c.ID,
-						ToNikname:   c.Name,
-						From:        client.ID,
-						FromNikname: client.Name,
-						Body:        msgBody,
-					}
+					msg := client.NewMessage(c, msgBody)
 					s.SendMessage(&msg)
 					//clear message
 					text = ""

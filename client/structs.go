@@ -24,6 +24,17 @@ func (cl *Client) initClient(ID int) {
 	cl.IncomingChan = make(chan *msg.Message)
 }
 
+// NewMessage - new message to
+func (cl *Client) NewMessage(to *Client, msgBody string) msg.Message {
+	return msg.Message{
+		To:          to.ID,
+		ToNikname:   to.Name,
+		From:        cl.ID,
+		FromNikname: cl.Name,
+		Body:        msgBody,
+	}
+}
+
 // NewClient - create new client
 func NewClient(ID int) *Client {
 	client := Client{}
