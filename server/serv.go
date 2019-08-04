@@ -144,7 +144,7 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 		case "":
 			continue
 		case "!exit":
-			log.Printf("Client %v decited to exit", conn.RemoteAddr())
+			log.Printf("Client %s decited to exit", conn.RemoteAddr().String())
 			conn.Close()
 			return nil
 		case "!help":
@@ -157,25 +157,23 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 		default:
 			//TODO: will think about message send design
 			// rewrite to function with error interface
-			if text[0] == 47 {
-				texts := strings.SplitN(text, " ", 2)
-
-				msgTo, msgBody := texts[0], texts[1]
-
-				msgTo = strings.Replace(msgTo, "/", "", 1)
-				id, _ := strconv.Atoi(msgTo)
-
+			isMessage, cmd, arg := msg.TrimText(text)
+			switch {
+			case isMessage:
+				id, _ := strconv.Atoi(cmd)
 				c := s.getActiveClientByID(id)
 				if c != nil {
-					msg := client.NewMessage(c, msgBody)
+					msg := client.NewMessage(c, arg)
 					s.SendMessage(&msg)
 					//clear message
 					text = ""
 				} else {
 					text = "Client not found!!"
 				}
-
-			} else {
+			case cmd == "!name":
+				client.Name = arg
+				text = ""
+			default:
 				text = strings.ToUpper(text)
 			}
 		}

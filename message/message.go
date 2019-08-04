@@ -1,6 +1,9 @@
 package message
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 // Message - message
 type Message struct {
@@ -19,4 +22,32 @@ func (m *Message) FromStringMessage(addtional ...string) string {
 // FromByteMessage - get full byte answer
 func (m *Message) FromByteMessage(addtional ...string) []byte {
 	return []byte(m.FromNikname + ": " + m.Body + strings.Join(addtional, " "))
+}
+
+// GetCommendArg - get command argument from string
+func GetCommendArg(command, str string) (string, error) {
+
+	// check string contains
+	if !strings.Contains(str, command) {
+		return "", errors.New("command not found")
+	}
+
+	return strings.TrimSpace(strings.Replace(str, command, "", 1)), nil
+}
+
+// TrimText = separate command and text
+func TrimText(text string) (bool, string, string) {
+	strs := strings.SplitN(strings.TrimSpace(text), " ", 2)
+	if len(strs) < 2 {
+		return false, "", ""
+	}
+
+	strs[1] = strings.TrimSpace(strs[1])
+
+	if strs[0][0] == 47 {
+		msgTo := strings.Replace(strs[0], "/", "", 1)
+		return true, msgTo, strs[1]
+	}
+
+	return false, strs[0], strs[1]
 }
