@@ -6,7 +6,7 @@ import (
 
 func main() {
 
-	server := server.Init("")
+	server := server.Init(":3333")
 	server.Start()
 
 }

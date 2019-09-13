@@ -7,7 +7,6 @@
 ## TODO list
 
 * Refactoring
-* Changes users nikname
 * Add broadcast messages
 * Add more commands
 * Redisgn sending (send via nikname)

@@ -172,7 +172,7 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 				}
 			case cmd == "!name":
 				client.Name = arg
-				text = ""
+				text = "Name changed!"
 			default:
 				text = strings.ToUpper(text)
 			}
