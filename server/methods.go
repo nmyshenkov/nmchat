@@ -5,27 +5,27 @@ import (
 	msg "nmchat/message"
 )
 
-//AddNewClient - add client
+// AddNewClient - add client
 func (s *Server) AddNewClient(cl *cl.Client) {
 	s.addCliCh <- cl
 }
 
-//DelClient - del client
+// DelClient - del client
 func (s *Server) DelClient(cl *cl.Client) {
 	s.delCliCh <- cl
 }
 
-//SendMessage - send message to chat
+// SendMessage - send message to chat
 func (s *Server) SendMessage(msg *msg.Message) {
 	s.sendMsgCh <- msg
 }
 
-//Done - done channale
+// Done - done channale
 func (s *Server) Done() {
 	s.doneCh <- true
 }
 
-//Err - error channel
+// Err - error channel
 func (s *Server) Err(err error) {
 	s.errCh <- err
 }
@@ -37,8 +37,8 @@ func (s *Server) getNextClientID() int {
 }
 
 func (s *Server) getActiveClientByID(id int) *cl.Client {
-	if cl, ok := s.clients[id]; ok {
-		return cl
+	if client, ok := s.clients[id]; ok {
+		return client
 	}
 	return nil
 }

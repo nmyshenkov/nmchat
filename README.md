@@ -2,12 +2,12 @@
 
 ## features
 
-* Sending messages to anouther clients in chat
+* Sending messages to another clients in chat
 
 ## TODO list
 
+* Add broadcast messages (+)
 * Refactoring
-* Add broadcast messages
 * Add more commands
-* Redisgn sending (send via nikname)
-* Autocomplite
+* Redesign sending (send via nickname)
+* Autocomplete

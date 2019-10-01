@@ -11,10 +11,11 @@ import (
 	"time"
 )
 
-//Init chat server.
+// Init chat server.
 func Init(addr string) *Server {
 	messages := []*msg.Message{}
 	sendMsgCh := make(chan *msg.Message)
+	broadcastCh := make(chan *msg.Message)
 	clients := make(map[int]*cl.Client)
 	addCh := make(chan *cl.Client)
 	delCh := make(chan *cl.Client)
@@ -25,6 +26,7 @@ func Init(addr string) *Server {
 		addr,
 		messages,
 		sendMsgCh,
+		broadcastCh,
 		clients,
 		1,
 		addCh,
@@ -35,7 +37,7 @@ func Init(addr string) *Server {
 	}
 }
 
-func (s *Server) lisenChannels() {
+func (s *Server) listenChannels() {
 
 	for {
 		select {
@@ -45,14 +47,17 @@ func (s *Server) lisenChannels() {
 		case client := <-s.delCliCh:
 			delete(s.clients, client.ID)
 
-		case msg := <-s.sendMsgCh:
-			log.Println("Send:", msg)
-			s.messages = append(s.messages, msg)
-			if msg.To > 0 {
-				c := s.getActiveClientByID(msg.To)
+		case message := <-s.sendMsgCh:
+			log.Println("Send:", message)
+			s.messages = append(s.messages, message)
+			switch {
+			case message.To > 0:
+				c := s.getActiveClientByID(message.To)
 				if c != nil {
-					c.IncomingChan <- msg
+					c.IncomingChan <- message
 				}
+			default:
+				s.broadcastCh <- message
 			}
 
 		case err := <-s.errCh:
@@ -65,7 +70,7 @@ func (s *Server) lisenChannels() {
 	}
 }
 
-//Start - start server
+// Start - start server
 func (s *Server) Start() {
 
 	defer func() {
@@ -77,8 +82,8 @@ func (s *Server) Start() {
 		addr = ":3333"
 	}
 
-	//start to lisen channels
-	go s.lisenChannels()
+	// start to lisen channels
+	go s.listenChannels()
 
 	log.Printf("Starting server on %v\n", addr)
 	listener, err := net.Listen("tcp", addr)
@@ -117,28 +122,31 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 	w.WriteString("Write !help to show commands\n Your nikname: " + client.Name + "\n")
 	w.Flush()
 
-	//lisen incomming messages
+	// listen incoming messages
 	go func() {
 		for {
 			select {
 			case message := <-client.IncomingChan:
 				w.Write(message.FromByteMessage("\n"))
 				w.Flush()
+			case message := <-s.broadcastCh:
+				w.Write(message.FromByteMessage("\n"))
+				w.Flush()
 			}
 		}
 	}()
 
-	scanr := bufio.NewScanner(r)
+	scanner := bufio.NewScanner(r)
 	for {
-		scanned := scanr.Scan()
+		scanned := scanner.Scan()
 		if !scanned {
-			if err := scanr.Err(); err != nil {
+			if err := scanner.Err(); err != nil {
 				log.Printf("%v(%v)", err, conn.RemoteAddr())
 				return err
 			}
 			break
 		}
-		text := scanr.Text()
+		text := scanner.Text()
 
 		switch text {
 		case "":
@@ -155,7 +163,7 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 				text += "\t" + client.Name + " with ID: " + client.GetTextID() + "\n"
 			}
 		default:
-			//TODO: will think about message send design
+			// TODO: will think about message send design
 			// rewrite to function with error interface
 			isMessage, cmd, arg := msg.TrimText(text)
 			switch {
@@ -163,9 +171,9 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 				id, _ := strconv.Atoi(cmd)
 				c := s.getActiveClientByID(id)
 				if c != nil {
-					msg := client.NewMessage(c, arg)
-					s.SendMessage(&msg)
-					//clear message
+					message := client.NewMessage(c, arg)
+					s.SendMessage(&message)
+					// clear message
 					text = ""
 				} else {
 					text = "Client not found!!"
@@ -173,6 +181,11 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 			case cmd == "!name":
 				client.Name = arg
 				text = "Name changed!"
+			case cmd == "!all":
+				message := client.NewBroadcastMessage(arg)
+				s.SendMessage(&message)
+				// clear message
+				text = ""
 			default:
 				text = strings.ToUpper(text)
 			}

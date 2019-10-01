@@ -6,6 +6,6 @@ Commands:
 	!exit - exit from chat
 	!help - print info about command 
 	!list - print users in the chat
-	!name <name> - change nikname`
 
-
+	!name <name> - change nickname
+	!all <message> - send to all`

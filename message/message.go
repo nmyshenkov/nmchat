@@ -15,13 +15,13 @@ type Message struct {
 }
 
 // FromStringMessage - get full string answer
-func (m *Message) FromStringMessage(addtional ...string) string {
-	return m.FromNikname + ": " + m.Body + strings.Join(addtional, " ")
+func (m *Message) FromStringMessage(additional ...string) string {
+	return m.FromNikname + ": " + m.Body + strings.Join(additional, " ")
 }
 
 // FromByteMessage - get full byte answer
-func (m *Message) FromByteMessage(addtional ...string) []byte {
-	return []byte(m.FromNikname + ": " + m.Body + strings.Join(addtional, " "))
+func (m *Message) FromByteMessage(additional ...string) []byte {
+	return []byte(m.FromNikname + ": " + m.Body + strings.Join(additional, " "))
 }
 
 // GetCommendArg - get command argument from string

@@ -5,26 +5,34 @@ import (
 	"strconv"
 )
 
-//Client - client's struct
+// Client - client's struct
 type Client struct {
 	ID           int
 	Name         string
 	IncomingChan chan *msg.Message
 }
 
-//GetTextID - return string ID
+// GetTextID - return string ID
 func (cl *Client) GetTextID() string {
 	return strconv.Itoa(cl.ID)
 }
 
-//InitClient - init client
+// InitClient - init client
 func (cl *Client) initClient(ID int) {
 	cl.ID = ID
 	cl.Name = "User" + strconv.Itoa(ID)
 	cl.IncomingChan = make(chan *msg.Message)
 }
 
-// NewMessage - new message to
+func (cl *Client) NewBroadcastMessage(msgBody string) msg.Message {
+	return msg.Message{
+		From:        cl.ID,
+		FromNikname: cl.Name,
+		Body:        msgBody,
+	}
+}
+
+//  NewMessage - new message to
 func (cl *Client) NewMessage(to *Client, msgBody string) msg.Message {
 	return msg.Message{
 		To:          to.ID,
