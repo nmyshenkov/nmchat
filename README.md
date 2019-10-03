@@ -8,6 +8,7 @@
 
 * Add broadcast messages (+)
 * Refactoring
+* Add time in message
 * Add more commands
 * Redesign sending (send via nickname)
 * Autocomplete

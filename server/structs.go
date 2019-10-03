@@ -11,7 +11,6 @@ type Server struct {
 	Addr        string
 	messages    []*msg.Message
 	sendMsgCh   chan *msg.Message
-	broadcastCh chan *msg.Message
 	clients     map[int]*cl.Client
 	clNextID    int
 	addCliCh    chan *cl.Client

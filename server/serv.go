@@ -7,7 +7,6 @@ import (
 	cl "nmchat/client"
 	msg "nmchat/message"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -15,7 +14,6 @@ import (
 func Init(addr string) *Server {
 	messages := []*msg.Message{}
 	sendMsgCh := make(chan *msg.Message)
-	broadcastCh := make(chan *msg.Message)
 	clients := make(map[int]*cl.Client)
 	addCh := make(chan *cl.Client)
 	delCh := make(chan *cl.Client)
@@ -26,7 +24,6 @@ func Init(addr string) *Server {
 		addr,
 		messages,
 		sendMsgCh,
-		broadcastCh,
 		clients,
 		1,
 		addCh,
@@ -57,7 +54,10 @@ func (s *Server) listenChannels() {
 					c.IncomingChan <- message
 				}
 			default:
-				s.broadcastCh <- message
+				for _, client := range s.clients {
+					// TODO:: check that client isActive
+					client.IncomingChan <- message
+				}
 			}
 
 		case err := <-s.errCh:
@@ -129,9 +129,6 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 			case message := <-client.IncomingChan:
 				w.Write(message.FromByteMessage("\n"))
 				w.Flush()
-			case message := <-s.broadcastCh:
-				w.Write(message.FromByteMessage("\n"))
-				w.Flush()
 			}
 		}
 	}()
@@ -153,7 +150,6 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 			continue
 		case "!exit":
 			log.Printf("Client %s decited to exit", conn.RemoteAddr().String())
-			conn.Close()
 			return nil
 		case "!help":
 			text = HELP
@@ -181,13 +177,11 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 			case cmd == "!name":
 				client.Name = arg
 				text = "Name changed!"
-			case cmd == "!all":
-				message := client.NewBroadcastMessage(arg)
+			default:
+				message := client.NewBroadcastMessage(text)
 				s.SendMessage(&message)
 				// clear message
 				text = ""
-			default:
-				text = strings.ToUpper(text)
 			}
 		}
 
