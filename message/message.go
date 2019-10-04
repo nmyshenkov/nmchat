@@ -3,6 +3,7 @@ package message
 import (
 	"errors"
 	"strings"
+	"time"
 )
 
 // Message - message
@@ -16,12 +17,12 @@ type Message struct {
 
 // FromStringMessage - get full string answer
 func (m *Message) FromStringMessage(additional ...string) string {
-	return m.FromNikname + ": " + m.Body + strings.Join(additional, " ")
+	return getChatTime() + m.FromNikname + ": " + m.Body + strings.Join(additional, " ")
 }
 
 // FromByteMessage - get full byte answer
 func (m *Message) FromByteMessage(additional ...string) []byte {
-	return []byte(m.FromNikname + ": " + m.Body + strings.Join(additional, " "))
+	return []byte(getChatTime() + m.FromNikname + ": " + m.Body + strings.Join(additional, " "))
 }
 
 // GetCommendArg - get command argument from string
@@ -50,4 +51,8 @@ func TrimText(text string) (bool, string, string) {
 	}
 
 	return false, strs[0], strs[1]
+}
+
+func getChatTime() string {
+	return "[" + time.Now().Format("3:04:05PM") + "] "
 }
