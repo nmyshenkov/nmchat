@@ -20,7 +20,7 @@ func (s *Server) SendMessage(msg *msg.Message) {
 	s.sendMsgCh <- msg
 }
 
-// Done - done channale
+// Done - done channel
 func (s *Server) Done() {
 	s.doneCh <- true
 }
@@ -41,4 +41,19 @@ func (s *Server) getActiveClientByID(id int) *cl.Client {
 		return client
 	}
 	return nil
+}
+
+func (s *Server) checkExistNikname(cl *cl.Client, newName string) bool {
+	for _, client := range s.clients {
+		// if it current client - slip
+		if client.ID == cl.ID {
+			continue
+		}
+
+		if client.Name == newName {
+			return true
+		}
+	}
+
+	return false
 }

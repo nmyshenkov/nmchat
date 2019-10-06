@@ -102,8 +102,8 @@ func (s *Server) Start() {
 		}
 		log.Printf("New connection from %v.", conn.RemoteAddr())
 		conn.SetDeadline(time.Now().Add(conn.IdleTimeout))
-		cl := cl.NewClient(s.getNextClientID())
-		s.AddNewClient(cl)
-		go s.handleClient(conn, cl)
+		client := cl.NewClient(s.getNextClientID())
+		s.AddNewClient(client)
+		go s.handleClient(conn, client)
 	}
 }

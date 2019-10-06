@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
+func (s *Server) handleClient(conn net.Conn, client *cl.Client) {
 	defer func() {
 		log.Printf("Closing connection from %v", conn.RemoteAddr())
 		s.DelClient(client)
@@ -38,7 +38,7 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 		if !scanned {
 			if err := scanner.Err(); err != nil {
 				log.Printf("%v(%v)", err, conn.RemoteAddr())
-				return err
+				return
 			}
 			break
 		}
@@ -49,13 +49,13 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 			continue
 		case "!exit":
 			log.Printf("Client %s decited to exit", conn.RemoteAddr().String())
-			return nil
+			return
 		case "!help":
 			text = HELP
 		case "!list":
 			text = "Users in the chat:\n"
 			for _, client := range s.clients {
-				text += "\t" + client.Name + " with ID: " + client.GetTextID() + "\n"
+				text += "\t\t" + client.Name + " with ID: " + client.GetTextID() + "\n"
 			}
 		default:
 			// TODO: will think about message send design
@@ -74,8 +74,11 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 					text = "Client not found!!"
 				}
 			case cmd == "!name":
-				client.Name = arg
-				text = "Name changed!"
+				text = "Nikname already exists!"
+				if !s.checkExistNikname(client, arg) {
+					client.ChangeName(arg)
+					text = "Name changed!"
+				}
 			default:
 				message := client.NewBroadcastMessage(text)
 				s.SendMessage(&message)
@@ -87,5 +90,5 @@ func (s *Server) handleClient(conn net.Conn, client *cl.Client) error {
 		w.WriteString(text + "\n")
 		w.Flush()
 	}
-	return nil
+	return
 }
