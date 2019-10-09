@@ -53,8 +53,9 @@ func (s *Server) listenChannels() {
 				}
 			default:
 				for _, client := range s.clients {
-					// TODO:: check that client isActive
-					client.IncomingChan <- message
+					if s.clientIsActive(client.ID) {
+						client.IncomingChan <- message
+					}
 				}
 			}
 

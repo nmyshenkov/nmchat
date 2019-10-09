@@ -43,6 +43,13 @@ func (s *Server) getActiveClientByID(id int) *cl.Client {
 	return nil
 }
 
+func (s *Server) clientIsActive(id int) bool {
+	if _, ok := s.clients[id]; ok {
+		return true
+	}
+	return false
+}
+
 func (s *Server) checkExistNikname(cl *cl.Client, newName string) bool {
 	for _, client := range s.clients {
 		// if it current client - slip
