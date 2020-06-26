@@ -2,10 +2,10 @@ package server
 
 import (
 	"bufio"
+	cl "github.com/nmyshenkov/nmchat/client"
+	msg "github.com/nmyshenkov/nmchat/message"
 	"log"
 	"net"
-	cl "nmchat/client"
-	msg "nmchat/message"
 	"strconv"
 )
 

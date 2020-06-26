@@ -1,7 +1,7 @@
 package main
 
 import (
-	"nmchat/server"
+	"github.com/nmyshenkov/nmchat/server"
 )
 
 func main() {

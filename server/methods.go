@@ -1,8 +1,8 @@
 package server
 
 import (
-	cl "nmchat/client"
-	msg "nmchat/message"
+	cl "github.com/nmyshenkov/nmchat/client"
+	msg "github.com/nmyshenkov/nmchat/message"
 )
 
 // AddNewClient - add client

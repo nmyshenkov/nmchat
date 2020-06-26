@@ -1,7 +1,7 @@
 package client
 
 import (
-	msg "nmchat/message"
+	msg "github.com/nmyshenkov/nmchat/message"
 	"strconv"
 )
 
